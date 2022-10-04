@@ -1,0 +1,53 @@
+module: imgui
+block: line_sink
+label: ImGui Line Sink
+blocktype: sync_block
+
+typekeys:
+  - id: T
+    type: class
+    options: 
+        # - cf32
+        - rf32
+        # - ri32
+        # - ri16
+        # - ri8
+
+parameters:
+-   id: npoints
+    label: Number of Points
+    dtype: size
+    gettable: true
+    grc:
+        default: 1024
+-   id: nplots
+    label: Number of Points
+    dtype: size
+    gettable: true
+    default: 1
+# -   id: data
+#     label: Data
+#     dtype: typekeys/T
+#     cotr: false
+
+ports:
+-   domain: stream
+    id: in
+    direction: input
+    type: typekeys/T
+    multiplicity: parameters/nplots
+implementations:
+-   id: cpu
+# -   id: cuda
+
+callbacks:
+# -   id: lock
+#     return: void
+# -   id: unlock
+#     return: void
+# -   id: ptr
+#     return: std::vector<void*>
+-   id: get_buf
+    return: std::vector<std::vector<T>>
+
+file_format: 1
