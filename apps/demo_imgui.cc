@@ -6,8 +6,8 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include <stdio.h>
 #include "implot.h"
+#include <stdio.h>
 
 #include <gnuradio/blocks/vector_source.h>
 #include <gnuradio/flowgraph.h>
@@ -119,6 +119,7 @@ int main(int, char**)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard
@@ -164,8 +165,10 @@ int main(int, char**)
     std::vector<float> input_data{ 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 };
     float samp_rate = 32000;
 
-    auto src = gr::blocks::vector_source_f::make({ input_data, true });
-    auto mult = gr::math::multiply_const_ff::make({ 1.0 });
+    static float mult_k = 1.0;
+
+    auto src = gr::blocks::vector_source_f::make_cpu({ input_data, true });
+    auto mult = gr::math::multiply_const_ff::make({ mult_k });
     auto throttle = gr::streamops::throttle::make({ samp_rate });
     auto snk = gr::imgui::line_sink_f::make({ 1024, 1 });
 
@@ -233,10 +236,10 @@ int main(int, char**)
         }
 
         {
-            ImGui::Begin("name of widget"); // Create a window called "Hello, world!" and
-                                            // append into it.
-            static bool animate = true;
-            ImGui::Checkbox("Animate", &animate);
+            // ImGui::Begin("name of widget"); // Create a window called "Hello, world!"
+            // and append into it.
+            // static bool animate = true;
+            // ImGui::Checkbox("Animate", &animate);
 
             // Plot as lines and plot as histogram
             // IMGUI_DEMO_MARKER("Widgets/Plotting/PlotLines, PlotHistogram");
@@ -259,43 +262,47 @@ int main(int, char**)
             //     phase += 0.10f * values_offset;
             //     refresh_time += 1.0f / 60.0f;
             // }
-            
+
             static std::vector<std::vector<float>> buf;
-            if (animate)
-                buf = snk->get_buf();
+            // if (animate)
+            buf = snk->get_buf();
             auto npoints = snk->npoints();
             auto nplots = snk->nplots();
-            static double refresh_time = 0.0;
+            // static double refresh_time = 0.0;
             // if (!animate || refresh_time == 0.0)
             //     refresh_time = ImGui::GetTime();
             // while (refresh_time <
             //        ImGui::GetTime()) // Create data at fixed 60 Hz rate for the demo
             // {
             // if (animate) {
-                for (size_t idx = 0; idx < nplots; idx++) {
-                    ImGui::PlotLines("Lines",
-                                     buf[idx].data(),
-                                     npoints,
-                                     npoints,
-                                     "",
-                                     -1.0f,
-                                     1.0f,
-                                     ImVec2(800, 400.0f));
-                    
+            // for (size_t idx = 0; idx < nplots; idx++) {
+            //     ImGui::PlotLines("Lines",
+            //                      buf[idx].data(),
+            //                      npoints,
+            //                      npoints,
+            //                      "",
+            //                      -1.0f,
+            //                      1.0f,
+            //                      ImVec2(800, 400.0f));
+            // }
+            // ImGui::End();
+
+            ImGui::Begin("My Window");
+
+
+            for (size_t idx = 0; idx < nplots; idx++) {
+                if (ImPlot::BeginPlot("My Plot")) {
+                    ImPlot::PlotLine("My Line Plot", buf[idx].data(), npoints);
+
+                    ImPlot::EndPlot();
                 }
-                ImGui::End();
+            }
 
-                ImGui::Begin("My Window");
+            if (ImGui::SliderFloat("float", &mult_k, 0.0f, 1.0f)) {
+                mult->set_k(mult_k);
+            }
 
-
-                for (size_t idx = 0; idx < nplots; idx++) {
-                    if (ImPlot::BeginPlot("My Plot")) {
-                        ImPlot::PlotLine("My Line Plot", buf[idx].data(), npoints);
-
-                        ImPlot::EndPlot();
-                    }
-                }
-                ImGui::End();
+            ImGui::End();
             // }
 
             // // Plots can display overlay texts
@@ -316,7 +323,6 @@ int main(int, char**)
             //                      1.0f,
             //                      ImVec2(0, 80.0f));
             // }
-            
         }
 
         // Rendering
@@ -337,6 +343,7 @@ int main(int, char**)
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ImPlot::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();

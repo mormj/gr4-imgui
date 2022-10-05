@@ -1,9 +1,12 @@
 # Libs
 srcs = ['implot.cpp',
         'implot_items.cpp',
-        'implot_demo.cpp']
+        'implot_demo.cpp'
+        ]
 
-implot_lib = library('gnuradio-blocklib-blocks', 
+
+
+implot_lib = library('implot', 
     srcs, 
     include_directories : ['.'],
     install : true,
@@ -16,6 +19,7 @@ implot_dep = declare_dependency(include_directories : ['.'],
 # GR namespace tests
 srcs = ['demo_imgui'
           ]
+
 deps = [gnuradio_gr_dep,
                 gnuradio_blocklib_blocks_dep,
                 gnuradio_blocklib_streamops_dep,
